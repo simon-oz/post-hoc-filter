@@ -1,0 +1,117 @@
+1. create a virtual env
+python -m venv rel_judge
+
+activate it
+source rel_judge/bin/activate
+
+pip install --upgrade pip
+
+pip install transformers accelerate torch bitsandbytes
+pip install huggingface_hub
+pip install tiktoken
+pip install triton>=3.4
+
+pip install nltk
+python -m nltk.downloader wordnet
+
+2. Download the following models.
+
+cd /home/jovyan/nfs_share/models/huggingface/hub
+huggingface-cli download facebook/bart-large-mnli --local-dir ./facebook/bart-large-mnli
+huggingface-cli download nvidia/llama-embed-nemotron-8b --local-dir ./nvidia/llama-embed-nemotron-8b
+huggingface-cli download google/embeddinggemma-300m --local-dir ./google/embeddinggemma-300m
+huggingface-cli download MoritzLaurer/deberta-v3-large-zeroshot-v2.0 --local-dir ./MoritzLaurer/deberta-v3-large-zeroshot-v2.0
+huggingface-cli download microsoft/deberta-v3-large --local-dir /home/jovyan/nfs_share/models/huggingface/hub/microsoft/deberta-v3-large
+huggingface-cli download Qwen/Qwen3-30B-A3B-Instruct-2507 --local-dir /home/jovyan/nfs_share/models/huggingface/hub/qwen/Qwen3-30B-A3B-Instruct-2507
+huggingface-cli download mistralai/Mistral-Large-Instruct-2411 --local-dir /home/jovyan/nfs_share/models/huggingface/hub/mistral_models/mistral_large2411
+huggingface-cli download mistralai/Mistral-Small-24B-Instruct-2501 --local-dir /home/jovyan/nfs_share/models/huggingface/hub/mistral_models/mistral_small2501
+
+huggingface-cli download Qwen/Qwen3-Embedding-8B --local-dir /home/jovyan/nfs_share/models/huggingface/hub/qwen/qwen_embed_8b
+huggingface-cli download Qwen/Qwen3-Embedding-4B --local-dir /home/jovyan/nfs_share/models/huggingface/hub/qwen/qwen_embed_4b
+huggingface-cli download Qwen/Qwen3-Embedding-0.6B --local-dir /home/jovyan/nfs_share/models/huggingface/hub/qwen/qwen_embed_06b
+
+huggingface-cli download nvidia/NV-Embed-v2 --local-dir /home/jovyan/nfs_share/models/huggingface/hub/nvidia/nv-embed-v2
+huggingface-cli download moonshotai/Kimi-K2-Thinking --local-dir /home/jovyan/nfs_share/models/huggingface/hub/kimi/kimi-k2-thinking
+
+
+To install flash-attn
+pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.0.post2/flash_attn-2.7.0.post2+cu12torch2.3cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
+
+3. Coding
+
+4. run the classifier
+
+python -m src.rel_classify \
+--input /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/input_data.json \
+--output /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/output_gemma300m-gptoss120b.json \
+--embed_model_path /home/jovyan/nfs_share/models/huggingface/hub/google/embeddinggemma-300m \
+--nli_model_id /home/jovyan/nfs_share/models/huggingface/hub/MoritzLaurer/deberta-v3-large-zeroshot-v2.0 \
+--llm_model_path /home/jovyan/nfs_share/models/huggingface/hub/openai/gpt-oss-120b 
+
+python -m src.rel_classify \
+--input /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/input_data.json \
+--output /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/output_nemotron8b-gptoss120b.json \
+--embed_model_path /home/jovyan/nfs_share/models/huggingface/hub/nvidia/llama-embed-nemotron-8b \
+--nli_model_id /home/jovyan/nfs_share/models/huggingface/hub/MoritzLaurer/deberta-v3-large-zeroshot-v2.0 \
+--llm_model_path /home/jovyan/nfs_share/models/huggingface/hub/openai/gpt-oss-120b 
+
+
+python -m src.rel_classify \
+--input /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/input_data.json \
+--output /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/output_gemma300m-gptoss20b.json \
+--embed_model_path /home/jovyan/nfs_share/models/huggingface/hub/google/embeddinggemma-300m \
+--nli_model_id /home/jovyan/nfs_share/models/huggingface/hub/microsoft/deberta-v3-large \
+--llm_model_path /home/jovyan/nfs_share/models/huggingface/hub/openai/gpt-oss-20b 
+
+python -m src.rel_classify \
+--input /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/input_data.json \
+--output /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/output_nemotron_8b-gptoss20b.json \
+--embed_model_path /home/jovyan/nfs_share/models/huggingface/hub/nvidia/llama-embed-nemotron-8b \
+--nli_model_id /home/jovyan/nfs_share/models/huggingface/hub/microsoft/deberta-v3-large \
+--llm_model_path /home/jovyan/nfs_share/models/huggingface/hub/openai/gpt-oss-20b 
+
+
+python -m src.rel_classify \
+--input /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/input_data.json \
+--output /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/output_gemma300m-qwen3-235b.json \
+--embed_model_path /home/jovyan/nfs_share/models/huggingface/hub/google/embeddinggemma-300m \
+--nli_model_id /home/jovyan/nfs_share/models/huggingface/hub/microsoft/deberta-v3-large \
+--llm_model_path /home/jovyan/nfs_share/models/huggingface/hub/qwen/qwen3-235b-a22b-inst-2507
+
+
+python -m src.rel_classify \
+--input /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/input_data.json \
+--output /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/output_nemotron_8b-qwen3-235b.json \
+--embed_model_path /home/jovyan/nfs_share/models/huggingface/hub/nvidia/llama-embed-nemotron-8b \
+--nli_model_id /home/jovyan/nfs_share/models/huggingface/hub/microsoft/deberta-v3-large \
+--llm_model_path /home/jovyan/nfs_share/models/huggingface/hub/qwen/qwen3-235b-a22b-inst-2507
+
+
+python -m src.rel_classify \
+--input /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/input_data.json \
+--output /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/output__gemma300m-llama31-8b.json \
+--embed_model_path /home/jovyan/nfs_share/models/huggingface/hub/google/embeddinggemma-300m \
+--nli_model_id /home/jovyan/nfs_share/models/huggingface/hub/microsoft/deberta-v3-large \
+--llm_model_path /home/jovyan/nfs_share/models/huggingface/hub/models--Qwen-Qwen2.5-Instruct
+
+
+
+python -m src.rel_classify \
+--input /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/input_data.json \
+--output /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/output_gemma300m-llama31-8b.json \
+--embed_model_path /home/jovyan/nfs_share/models/huggingface/hub/google/embeddinggemma-300m \
+--nli_model_id /home/jovyan/nfs_share/models/huggingface/hub/microsoft/deberta-v3-large \
+--llm_model_path /home/jovyan/nfs_share/models/huggingface/hub/meta-llama/Meta-Llama-3.1-8B-Instruct
+
+
+python -m src.rel_classify \
+--input /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/input_data.json \
+--output /home/jovyan/nfs_share/Simon/PROJECTS/relevance_judge/data/output_nemotron_8b-llama31-8b.json \
+--embed_model_path /home/jovyan/nfs_share/models/huggingface/hub/nvidia/llama-embed-nemotron-8b \
+--nli_model_id /home/jovyan/nfs_share/models/huggingface/hub/microsoft/deberta-v3-large \
+--llm_model_path /home/jovyan/nfs_share/models/huggingface/hub/meta-llama/Meta-Llama-3.1-8B-Instruct
+
+
+
+
+

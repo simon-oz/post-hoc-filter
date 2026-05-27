@@ -1,0 +1,266 @@
+1) What signals does ensemble_decision combine?
+For each (query, result_text) pair (where result_text = title + " " + snippet), the function builds four signals:
+
+
+Keyword prefilter (boolean)
+
+Quick rule: if none of the meaningful query terms (≥4 chars) appear in the title+snippet, the item is obviously Irrelevant → return "I" immediately.
+This avoids wasting compute on “How to Bake a Cake” for an ML query.
+
+
+
+Embedding similarity (float)
+
+Compute cosine similarity between query and title+snippet using your embedding model (e.g., gemma‑300m).
+Map that score to a label with thresholds:
+
+score ≥ embed_R → R
+embed_P ≤ score < embed_R → P
+score < embed_P → I
+
+
+
+
+
+Zero‑shot NLI (label + score)
+
+Use an NLI model (e.g., MoritzLaurer/deberta-v3-large-zeroshot-v2.0) with the hypothesis template:
+“This example is {label} to the query: {query}.”
+Returns a top label among ["Relevant","Partially Relevant","Irrelevant"] and a confidence score.
+We then apply acceptance thresholds:
+
+If top is R and score ≥ nli_R → accept R
+If top is P and score ≥ nli_P → accept P
+If top is I → accept I (we treat I as “confident by default”)
+
+
+
+If the top label doesn’t meet its threshold, we treat NLI as “no strong opinion” (nli_accepted = None).
+
+
+(Optional) LLM fallback
+
+When signals disagree or are borderline, a small, strict prompt is sent to a local LLM.
+The model returns exactly one of R/P/I, and we use that result.
+
+
+
+
+2) The decision rules (in plain English)
+Let:
+
+embed_lbl ∈ {R, P, I} from the embedding thresholds
+nli_accepted ∈ {R, P, I, None} from NLI + thresholds
+s_embed = the raw cosine similarity
+
+Then:
+
+Keyword prefilter fails → I
+Strong agreement:
+
+If embed_lbl = R and nli_accepted = R → R
+If embed_lbl = I and nli_accepted = I → I
+
+
+Direct conflict R vs I (one says R, the other says I) → P (conservative middle)
+Both say P → P
+NLI accepts I, but embeddings are very high (≥ embed_R + 0.10) → P (hedge) else I
+NLI accepts R, but embeddings only P or I:
+
+If s_embed ≥ embed_P and NLI is very confident (≥ nli_R + 0.10) → R
+Else → P
+
+
+If still ambiguous → use LLM fallback (strict single‑letter output)
+If fallback disabled → default P (conservative)
+
+
+This policy is conservative: we try to avoid false R by requiring agreement or strength.
+
+
+3) Typical thresholds & how to read them
+Default starting points (tune on a small dev set):
+Plain Text embed_R = 0.55embed_P = 0.35nli_R   = 0.60nli_P   = 0.45Show more lines
+
+Embedding thresholds are model‑dependent; for many sentence‑embedding models, 0.55/0.35 are reasonable starting splits for R/P/I.
+NLI thresholds prevent over‑confident “R” (require ≥0.60) but allow moderate “P” (≥0.45).
+
+
+4) Worked examples
+
+I’ll show inputs, all four signals, then the rule that triggers the final label.
+
+Example A — “How to Bake a Cake” vs “Python machine learning libraries”
+
+Prefilter: query tokens: python, machine, learning, libraries; none appear in the title/snippet → prefilter = False
+Returns I immediately.
+
+Decision: Rule 1 (prefilter fail) → I
+Diagnostics: {"prefilter": 0.0} (other scores might be absent/not computed)
+
+Example B — “scikit‑learn: Machine Learning in Python” vs same query
+
+Prefilter: passes (tokens like “Python”, “machine”, “learning” appear)
+Embedding: s_embed = 0.74 → embed_lbl = R
+NLI: top = “Relevant” with score = 0.88 → nli_accepted = R (≥0.60)
+Rule 2 (“strong agreement R&R”)
+
+Decision: R
+Diagnostics:
+JSON{  "prefilter": 1.0,  "embed_score": 0.74,  "nli_label": "R",  "nli_score": 0.88}``Show more lines
+
+Example C — “TensorFlow: An Open Source ML Framework” vs same query
+
+Prefilter: passes
+Embedding: s_embed = 0.62 → embed_lbl = R
+NLI: top = “Relevant”, score = 0.66 → nli_accepted = R
+Rule 2 (“strong agreement R&R”)
+
+Decision: R
+Diagnostics similar to Example B.
+
+Example D — “Cooking with JavaScript: A Recipe Book” vs “JavaScript frameworks 2024”
+
+Prefilter: passes (token “JavaScript” appears)
+Embedding: s_embed = 0.31 → embed_lbl = I (below 0.35)
+NLI: top = “Irrelevant”, score = 0.72 → nli_accepted = I
+Rule 2 (“strong agreement I&I”)
+
+Decision: I
+Diagnostics: {"prefilter": 1.0, "embed_score": 0.31, "nli_label": "I", "nli_score": 0.72}
+
+Example E — Borderline: “Vue.js – The Progressive JavaScript Framework” vs “JavaScript frameworks 2024”
+
+Prefilter: passes
+Embedding: s_embed = 0.53 → embed_lbl = P (0.35–0.55)
+NLI: top = “Relevant”, score = 0.58 → Not accepted for R (needs ≥0.60) → nli_accepted = None
+None of the strong rules apply → LLM fallback (or default to P if no fallback)
+The fallback almost surely returns R (clear topical match). If you keep fallback on, you’d get R; if fallback off, P (conservative).
+
+
+If you’d rather avoid the fallback here, you can bump embed_R down to 0.52 or lower, or nli_R down to 0.58—preferably tune with a dev set.
+
+
+Example F — Conflicting signals (“R” vs “I”)
+Suppose:
+
+Embedding: s_embed = 0.60 → R
+NLI: top = “Irrelevant”, score = 0.65 → accept I
+Rule 3 (direct conflict R vs I) → P (hedge)
+
+This protects against false R (over‑broad semantic similarity or noisy snippets).
+
+Example G — NLI says I, embeddings very high
+Suppose:
+
+Embedding: s_embed = 0.70 (≥ embed_R + 0.10 if embed_R=0.55) → very high
+NLI: top = “I”, accepted
+Rule 5: we compromise to P (because semantic similarity is very strong but NLI rejects relevance)
+
+
+Example H — NLI says R confidently, embeddings meh
+Suppose:
+
+Embedding: s_embed = 0.38 → P (just above 0.35)
+NLI: top = “R”, score = 0.72 (≥ nli_R + 0.10 if nli_R=0.60) → very confident
+Rule 6 (NLI accepts R with high margin and embeddings not too low) → R
+If NLI confidence were 0.61, we’d likely return P (not enough margin).
+
+
+5) What the diagnostics object means
+Each result gets a small dict you can log to understand “why”:
+JSON{  "prefilter": 1.0,         // 1.0 passed; 0.0 failed  "embed_score": 0.57,      // cosine similarity (normalized embeddings)  "nli_label": "P",         // raw top NLI label  "nli_score": 0.52         // NLI confidence for the top label}Show more lines
+
+prefilter = 0.0 means rule 1 fired → output I without others.
+embed_score shows where you stand relative to embed_R / embed_P.
+nli_label/nli_score show what NLI thought, and whether it met the thresholds (nli_R / nli_P).
+
+These values are extremely useful for threshold tuning.
+
+6) How to tune thresholds
+
+Prepare 20–100 labeled examples (your new “Reference answer” field is perfect).
+Grid search small ranges:
+
+embed_R: 0.52–0.62 by 0.02
+embed_P: 0.30–0.40 by 0.02
+nli_R:   0.58–0.68 by 0.02
+nli_P:   0.40–0.50 by 0.02
+
+
+For each setting, compute:
+
+Overall accuracy
+Per‑class agreement (R/P/I recalls)
+Macro‑F1
+Cohen’s κ
+
+
+Pick the setting that maximizes what you care about (e.g., high R recall with acceptable I precision, or balanced Macro‑F1).
+
+
+Practical tip: keep embed_P about 0.20 below embed_R, and keep nli_R − nli_P ≈ 0.15 so R requires meaningfully more confidence than P.
+
+
+7) Edge cases & recommended policies
+
+Very short queries (“React”) → prefilter may be too strict. Consider lowering the min token length (e.g., from 4 to 3).
+Ambiguous snippets (marketing fluff) → embeddings may be optimistic; let NLI or fallback gate R.
+Domain drift (e.g., biomedical) → raise nli_R a bit to avoid spurious R.
+Performance: If NLI is heavy, you can disable fallback and rely on “Rule 6” with a higher nli_R to still get good R decisions.
+
+
+8) One‑page mental model (flow)
+                  +----------------------+
+  (query, text) → | Keyword prefilter?   | -- no --> I
+                  +----------------------+
+                            |
+                           yes
+                            v
+                  +----------------------+
+                  | Embedding similarity |
+                  |   s → R/P/I          |
+                  +----------------------+
+                            |
+                            v
+                  +----------------------+
+                  |  Zero-shot NLI       |
+                  |  top + score         |
+                  |  accept? R/P/I/None  |
+                  +----------------------+
+                            |
+                            v
+   - Both R → R         - Both I → I       - R vs I → P
+   - Both P → P         - NLI=I & high s → P (else I)
+   - NLI=R & (s ok) & strong conf → R
+   - Else → fallback (LLM) or P
+
+
+9) TL;DR
+
+Prefilter removes obvious junk (I).
+Embeddings provide a smooth “semantic relatedness” score (R/P/I via thresholds).
+NLI brings a logical “is this related?” judgment with confidence; it can promote R or demote to I.
+Rules reconcile conflicts conservatively; fallback resolves tough ties.
+Diagnostics + threshold tuning help tailor performance to your domain.
+
+=========================
+
+The local LLM is NOT called for every decision.
+Even when use_llm_fallback = True (by default, unless simply add --use_llm_fallback in CLI to disable fallback entirely), the local LLM is only called when needed—i.e., when the other signals are ambiguous or conflict.
+In your ensemble_decision(...), the LLM is skipped in these common cases:
+
+Keyword prefilter fails → immediate I (no LLM).
+Embeddings & NLI agree strongly → immediate R or I (no LLM).
+Clear rules decide P (e.g., direct conflict R vs I) → (usually) no LLM.
+
+The LLM fallback is invoked for tricky cases, such as:
+
+NLI top label doesn’t meet its acceptance threshold (nli_accepted = None) and embeddings aren’t decisive.
+NLI says I but embeddings are very high (we hedge to P or consult LLM).
+NLI says R but embeddings are low unless NLI is very confident.
+Any residual borderline scenario after the rules.
+
+This design keeps the pipeline efficient and conservative: the LLM is a tie‑breaker, not the main classifier.
+
+

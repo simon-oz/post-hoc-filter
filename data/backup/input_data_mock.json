@@ -1,0 +1,141 @@
+[
+  {
+    "query": "Python machine learning libraries",
+    "results": [
+      {
+        "title": "scikit-learn: Machine Learning in Python",
+        "snippet": "Scikit-learn is a Python library for machine learning that features various classification, regression and clustering algorithms including support vector machines, random forests, gradient boosting, clustering and more.",
+        "reference answer": "R",
+        "url": "https://scikit-learn.org"
+      },
+      {
+        "title": "TensorFlow: An Open Source Machine Learning Framework",
+        "snippet": "TensorFlow is an end-to-end open source platform for machine learning. It has a comprehensive, flexible ecosystem of tools, libraries and community resources that lets researchers push the state-of-the-art in ML and developers easily build and deploy ML powered applications.",
+        "reference answer": "P",
+        "url": "https://tensorflow.org"
+      },
+      {
+        "title": "How to Bake a Cake",
+        "snippet": "Learn how to bake delicious cakes with our simple recipes and step-by-step instructions.",
+        "reference answer": "I",
+        "url": "https://example-baking-site.com"
+      }
+    ]
+  },
+  {
+    "query": "JavaScript frameworks 2024",
+    "results": [
+      {
+        "title": "React - A JavaScript library for building user interfaces",
+        "snippet": "React makes it painless to create interactive UIs. Design simple views for each state in your application, and React will efficiently update and render just the right components when your data changes.",
+        "reference answer": "R",
+        "url": "https://reactjs.org"
+      },
+      {
+        "title": "Vue.js - The Progressive JavaScript Framework",
+        "snippet": "An approachable, performant and versatile framework for building web user interfaces. Easy to pick up and integrate with other libraries or existing projects.",
+        "reference answer": "R",
+        "url": "https://vuejs.org"
+      },
+      {
+        "title": "Cooking with JavaScript: A Recipe Book",
+        "snippet": "A fun book that combines JavaScript programming with cooking recipes, teaching you how to build web applications while making delicious meals.",
+        "reference answer": "P",
+        "url": "https://javascript-cooking-book.com"
+      }
+    ]
+  },
+    {
+    "query": "Best Python web frameworks 2024",
+    "results": [
+    {
+        "title": "Django | The web framework for perfectionists with deadlines",
+        "snippet": "Django is a high-level Python web framework that encourages rapid development and clean, pragmatic design. Built by experienced developers, it takes care of much of the hassle of web development.",
+        "reference answer": "R",
+        "url": "https://www.djangoproject.com"
+    },
+    {
+        "title": "Flask — Flask Documentation (3.0.x)",
+        "snippet": "Flask is a lightweight WSGI web application framework. It is designed to make getting started quick and easy, with the ability to scale up to complex applications.",
+        "reference answer": "R",
+        "url": "https://flask.palletsprojects.com"
+    },
+    {
+        "title": "FastAPI - FastAPI",
+        "snippet": "FastAPI is a modern, fast (high-performance) web framework for building APIs with Python 3.7+ based on standard Python type hints.",
+        "reference answer": "R",
+        "url": "https://fastapi.tiangolo.com"
+    },
+    {
+        "title": "Python for Data Science: A Beginner's Guide",
+        "snippet": "This tutorial introduces Python libraries like Pandas and NumPy for data analysis, with no mention of web development.",
+        "reference answer": "I",
+        "url": "https://example-datascience-tutorial.com"
+    }
+    ]
+    },
+    {
+    "query": "Popular CSS preprocessors",
+        "results": [
+        {
+            "title": "Sass: Syntactically Awesome Style Sheets",
+            "snippet": "Sass is the most mature, stable, and powerful professional grade CSS extension language in the world. It reduces repetition of CSS and saves time.",
+            "reference answer": "R",
+            "url": "https://sass-lang.com"
+        },
+        {
+            "title": "Less.js | Less.js",
+            "snippet": "Leaner Style Sheets - a backwards-compatible language extension for CSS. Less gives you variables, mixins, functions and more.",
+            "reference answer": "R",
+            "url": "https://lesscss.org"
+        },
+        {
+            "title": "Stylus - expressive, robust, feature-rich CSS language",
+            "snippet": "Stylus is a revolutionary new language, providing an efficient, dynamic, and expressive way to generate CSS. It supports both indented syntax and regular CSS style.",
+            "reference answer": "P",
+            "url": "https://stylus-lang.com"
+        },
+        {
+            "title": "Top 10 JavaScript Games 2024",
+            "snippet": "Explore the best browser-based games built with JavaScript, including puzzle and arcade titles.",
+            "reference answer": "I",
+            "url": "https://js-games-review.com"
+        }
+        ]
+        },
+        {
+        "query": "Cloud computing platforms for developers",
+        "results": [
+            {
+                "title": "Amazon Web Services (AWS) - Cloud Computing Services",
+                "snippet": "AWS offers reliable, scalable, and inexpensive cloud computing services. Free to join, pay only for what you use.",
+                "reference answer": "R",
+                "url": "https://aws.amazon.com"
+            },
+            {
+                "title": "Microsoft Azure: Cloud Computing Services",
+                "snippet": "Invent with purpose, realize cost savings, and make your organization more efficient with Microsoft Azure’s open and flexible cloud computing platform.",
+                "reference answer": "R",
+                "url": "https://azure.microsoft.com"
+            },
+            {
+                "title": "Google Cloud: Cloud Computing, Hosting Services, and APIs",
+                "snippet": "Meet your business challenges head on with cloud computing services from Google, including data management, hybrid & multi-cloud, and AI & ML.",
+                "reference answer": "R",
+                "url": "https://cloud.google.com"
+            },
+            {
+                "title": "Heroku | App Platform",
+                "snippet": "Heroku is a container-based cloud Platform as a Service (PaaS). Developers use Heroku to deploy, manage, and scale modern apps.",
+                "reference answer": "P",
+                "url": "https://www.heroku.com"
+            },
+            {
+                "title": "Best Hiking Trails in the Cloud Forest",
+                "snippet": "Discover breathtaking trails through misty cloud forests with guided tours and wildlife spotting tips.",
+                "reference answer": "I",
+                "url": "https://hiking-adventures.com/cloud-forest"
+            }
+        ]
+    }    
+]
